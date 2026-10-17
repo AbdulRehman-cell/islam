@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const Surah = require('./models/Surah');
 const Ayah = require('./models/Ayah');
 const Reciter = require('./models/Reciter');
-const Bookmark = require('./models/Bookmark');
 const Feedback = require('./models/Feedbacks');
 
 async function seedDatabase() {
@@ -311,19 +310,7 @@ async function seedDatabase() {
       console.log(`Inserted ${ayahsData.length} ayahs.`);
     }
 
-    // 4. Seed Initial Bookmarks (Optional Sample)
-    const bookmarkCount = await Bookmark.countDocuments();
-    if (bookmarkCount === 0) {
-      console.log('Seeding initial sample bookmark...');
-      await Bookmark.create({
-        surahNumber: 1,
-        ayahNumber: 1,
-        note: 'Daily reflection starting point'
-      });
-      console.log('Sample bookmark seeded.');
-    }
-
-    // 5. Seed Initial Feedback Sample
+    // 4. Seed Initial Feedback Sample
     const feedbackCount = await Feedback.countDocuments();
     if (feedbackCount === 0) {
       console.log('Seeding initial feedback record...');
