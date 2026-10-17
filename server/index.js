@@ -75,8 +75,8 @@ mongoose.connection.on('disconnected', function () {
 mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 8000 })
   .then(function () {
     console.log('MongoDB connected')
-    // Suppress any mongoose.disconnect() the AI wrote in seed — server owns the connection
-    ;(function(){ var _d = mongoose.disconnect.bind(mongoose); mongoose.disconnect = function(){ return Promise.resolve(); }; try { require('./seed') } catch(e) { console.warn('Seed skipped:', e.message) } setTimeout(function(){ mongoose.disconnect = _d; }, 8000); })()
+    // Run seed and await its promise so async API-fetch seeds complete fully
+    ;(async function(){ var _d = mongoose.disconnect.bind(mongoose); mongoose.disconnect = function(){ return Promise.resolve(); }; try { var s = require('./seed'); if (s && typeof s.then === 'function') await s; else if (typeof s === 'function') await s(); } catch(e) { console.warn('Seed skipped:', e.message) } setTimeout(function(){ mongoose.disconnect = _d; }, 30000); })()
     app.listen(PORT, function () { console.log('Server ready on port ' + PORT) })
   })
   .catch(function (err) {

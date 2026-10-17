@@ -244,7 +244,5 @@ async function seedDatabase() {
   }
 }
 
-// Run immediately as an async IIFE
-(async () => {
-  await seedDatabase();
-})();
+// Export promise so the server's async seed runner can await it
+module.exports = seedDatabase();
