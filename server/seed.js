@@ -1,8 +1,22 @@
 const mongoose = require('mongoose');
+const https = require('https');
 const Surah = require('./models/Surah');
 const Ayah = require('./models/Ayah');
 const Reciter = require('./models/Reciter');
 const Feedback = require('./models/Feedbacks');
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { Accept: 'application/json' } }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(new Error(`JSON parse failed for ${url}: ${e.message}`)); }
+      });
+    }).on('error', reject);
+  });
+}
 
 async function seedDatabase() {
   try {
@@ -180,194 +194,35 @@ async function seedDatabase() {
       console.log(`Inserted ${surahsData.length} surahs.`);
     }
 
-    // 3. Seed Ayahs
+    // 3. Seed Ayahs — fetch all 6236 from alquran.cloud API
     const ayahCount = await Ayah.countDocuments();
     if (ayahCount === 0) {
-      console.log('Seeding Ayahs...');
-      const ayahsData = [
-        // Surah 1 (Al-Fatihah)
-        {
-          surahNumber: 1,
-          ayahNumber: 1,
-          textArabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-          textTranslation: 'In the name of Allah, the Entirely Merciful, the Especially Merciful.',
-          textTransliteration: 'Bismillaahir Rahmaanir Raheem',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 2,
-          textArabic: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-          textTranslation: '[All] praise is [due] to Allah, Lord of the worlds -',
-          textTransliteration: 'Alhamdu lillaahi Rabbil \'aalameen',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 3,
-          textArabic: 'الرَّحْمَٰنِ الرَّحِيمِ',
-          textTranslation: 'The Entirely Merciful, the Especially Merciful,',
-          textTransliteration: 'Ar-Rahmaanir-Raheem',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/3.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 4,
-          textArabic: 'مَالِكِ يَوْمِ الدِّينِ',
-          textTranslation: 'Sovereign of the Day of Recompense.',
-          textTransliteration: 'Maaliki Yawmid-Deen',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/4.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 5,
-          textArabic: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
-          textTranslation: 'It is You we worship and You we ask for help.',
-          textTransliteration: 'Iyyaaka na\'budu wa lyyaaka nasta\'een',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/5.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 6,
-          textArabic: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
-          textTranslation: 'Guide us to the straight path -',
-          textTransliteration: 'Ihdinas-Siraatal-Mustaqeem',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6.mp3',
-          juz: 1,
-          page: 1
-        },
-        {
-          surahNumber: 1,
-          ayahNumber: 7,
-          textArabic: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
-          textTranslation: 'The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray.',
-          textTransliteration: 'Siraatal-lazeena an\'amta \'alaihim ghayril-maghdoobi \'alaihim wa lad-daalleen',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/7.mp3',
-          juz: 1,
-          page: 1
-        },
-
-        // Surah 2 (Al-Baqarah) - First 5 Ayahs + Ayat Al-Kursi
-        {
-          surahNumber: 2,
-          ayahNumber: 1,
-          textArabic: 'الم',
-          textTranslation: 'Alif, Lam, Meem.',
-          textTransliteration: 'Alif-Laaam-Meeem',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/8.mp3',
-          juz: 1,
-          page: 2
-        },
-        {
-          surahNumber: 2,
-          ayahNumber: 2,
-          textArabic: 'ذَٰلِكَ الْكِتَابُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًى لِّلْمُتَّقِينَ',
-          textTranslation: 'This is the Book about which there is no doubt, a guidance for those conscious of Allah -',
-          textTransliteration: 'Zaalikal Kitaabu laa raiba feeh; hudal lilmuttaqeen',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/9.mp3',
-          juz: 1,
-          page: 2
-        },
-        {
-          surahNumber: 2,
-          ayahNumber: 255,
-          textArabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ',
-          textTranslation: 'Allah - there is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth.',
-          textTransliteration: 'Allaahu laaa ilaaha illaa Huwal Haiyul Qaiyuum; laa ta\'khuzuhuu sinatunw wa laa nawm; lahuu maa fissamaawaati wa maa fil ard',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3',
-          juz: 3,
-          page: 42
-        },
-
-        // Surah 36 (Ya-Sin) - Ayah 1 & 2
-        {
-          surahNumber: 36,
-          ayahNumber: 1,
-          textArabic: 'يس',
-          textTranslation: 'Ya, Seen.',
-          textTransliteration: 'Yaa-Seeen',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/3706.mp3',
-          juz: 22,
-          page: 440
-        },
-        {
-          surahNumber: 36,
-          ayahNumber: 2,
-          textArabic: 'وَالْقُرْآنِ الْحَكِيمِ',
-          textTranslation: 'By the wise Qur\'an.',
-          textTransliteration: 'Wal-Qur\'aanil-Hakeem',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/3707.mp3',
-          juz: 22,
-          page: 440
-        },
-
-        // Surah 67 (Al-Mulk) - Ayah 1
-        {
-          surahNumber: 67,
-          ayahNumber: 1,
-          textArabic: 'تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ',
-          textTranslation: 'Blessed is He in whose hand is dominion, and He is over all things competent -',
-          textTransliteration: 'Tabaraakal-lazee biyadihil-mulku wa Huwa \'alaa kulli shai\'in Qadeer',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/5242.mp3',
-          juz: 29,
-          page: 562
-        },
-
-        // Surah 112 (Al-Ikhlas)
-        {
-          surahNumber: 112,
-          ayahNumber: 1,
-          textArabic: 'قُلْ هُوَ اللَّهُ أَحَدٌ',
-          textTranslation: 'Say, "He is Allah, [who is] One,',
-          textTransliteration: 'Qul Huwallaahu Ahad',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6222.mp3',
-          juz: 30,
-          page: 604
-        },
-        {
-          surahNumber: 112,
-          ayahNumber: 2,
-          textArabic: 'اللَّهُ الصَّمَدُ',
-          textTranslation: 'Allah, the Eternal Refuge.',
-          textTransliteration: 'Allahus-Samad',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6223.mp3',
-          juz: 30,
-          page: 604
-        },
-        {
-          surahNumber: 112,
-          ayahNumber: 3,
-          textArabic: 'لَمْ يَلِدْ وَلَمْ يُولَدْ',
-          textTranslation: 'He neither begets nor is born,',
-          textTransliteration: 'Lam yalid wa lam yoolad',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6224.mp3',
-          juz: 30,
-          page: 604
-        },
-        {
-          surahNumber: 112,
-          ayahNumber: 4,
-          textArabic: 'وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ',
-          textTranslation: 'Nor is there to Him any equivalent."',
-          textTransliteration: 'Wa lam yakul-lahuu kufuwan ahad',
-          audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6225.mp3',
-          juz: 30,
-          page: 604
-        }
-      ];
-
-      await Ayah.insertMany(ayahsData);
-      console.log(`Inserted ${ayahsData.length} ayahs.`);
+      console.log('Fetching all 6236 Quran ayahs from alquran.cloud (this runs once)...');
+      const [arabicRes, englishRes] = await Promise.all([
+        fetchJson('https://api.alquran.cloud/v1/quran/quran-simple'),
+        fetchJson('https://api.alquran.cloud/v1/quran/en.sahih'),
+      ]);
+      const ayahDocs = [];
+      arabicRes.data.surahs.forEach((surah, si) => {
+        const enSurah = englishRes.data.surahs[si];
+        surah.ayahs.forEach((ayah, ai) => {
+          ayahDocs.push({
+            surahNumber: surah.number,
+            ayahNumber: ayah.numberInSurah,
+            textArabic: ayah.text,
+            textTranslation: enSurah.ayahs[ai].text,
+            textTransliteration: '',
+            audioUrl: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.number}.mp3`,
+            juz: ayah.juz,
+            page: ayah.page,
+          });
+        });
+      });
+      const BATCH = 500;
+      for (let i = 0; i < ayahDocs.length; i += BATCH) {
+        await Ayah.insertMany(ayahDocs.slice(i, i + BATCH));
+      }
+      console.log(`Inserted ${ayahDocs.length} ayahs.`);
     }
 
     // 4. Seed Initial Feedback Sample
