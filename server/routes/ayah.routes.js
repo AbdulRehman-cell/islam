@@ -27,6 +27,28 @@ const requireAdmin = (req, res, next) => {
   }
 };
 
+// GET /api/ayahs/daily - deterministic daily ayah (changes each calendar day)
+router.get('/daily', async (req, res, next) => {
+  try {
+    const count = await Ayah.countDocuments();
+    if (count === 0) return res.status(404).json({ error: 'No ayahs in database yet' });
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    const ayah = await Ayah.findOne().skip(dayOfYear % count);
+    res.json(ayah);
+  } catch (error) { next(error); }
+});
+
+// GET /api/ayahs/surah/:surahNumber - all ayahs for a given surah number
+router.get('/surah/:surahNumber', async (req, res, next) => {
+  try {
+    const surahNumber = Number(req.params.surahNumber);
+    if (isNaN(surahNumber)) return res.status(400).json({ error: 'Invalid surah number' });
+    const ayahs = await Ayah.find({ surahNumber }).sort({ ayahNumber: 1 });
+    res.json(ayahs);
+  } catch (error) { next(error); }
+});
+
 // GET /api/ayahs - Fetch all ayahs (with optional query parameters like surahNumber, juz, page)
 router.get('/', async (req, res, next) => {
   try {
